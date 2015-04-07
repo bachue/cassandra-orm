@@ -65,4 +65,14 @@ describe CassandraORM::Model do
     expect(Product.table_name).to eq 'products'
     expect(Upgrade.table_name).to eq 'upgrades'
   end
+
+  it 'should be able to compare between models' do
+    product1 = Product.new name: 'cassandra'
+    product2 = Product.new name: 'cassandra'
+    product3 = Product.new name: 'cassandra-orm'
+    expect(product1).to eq product2
+    expect(product2).to eq product1
+    expect(product1).not_to eq product3
+    expect(product3).not_to eq product1
+  end
 end

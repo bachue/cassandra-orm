@@ -1,9 +1,12 @@
 require 'cassandra-orm/base'
+require 'cassandra-orm/model/finder'
 require 'active_support/core_ext/hash/keys'
 require 'active_support/core_ext/string/inflections'
 
 module CassandraORM
-  class Model
+  class Model < Base
+    extend Finder
+
     def initialize attrs = {}
       attrs = attrs.symbolize_keys
       keys = self.class.attributes & attrs.keys
@@ -22,6 +25,11 @@ module CassandraORM
       self.class.primary_key.each_with_object({}) do |key, hash|
         hash[key] = send key
       end
+    end
+
+    def == right
+      self.class == right.class &&
+      primary_key_hash == right.primary_key_hash
     end
 
     class << self
