@@ -25,9 +25,6 @@ module CassandraORM
 
     class << self
       def inherited base
-        base.singleton_class.instance_exec do
-          attr_reader :primary_key
-        end
         base.instance_exec do
           def attributes *names
             @attributes ||= []
@@ -43,6 +40,10 @@ module CassandraORM
             attributes(*keys)
             @primary_key = keys.map(&:to_sym)
           end
+        end
+        base.singleton_class.instance_exec do
+          attr_reader :primary_key
+          private :set_primary_key
         end
       end
     end
