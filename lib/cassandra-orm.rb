@@ -1,4 +1,4 @@
-require 'cassandra-orm/base'
+require 'cassandra-orm/model'
 
 module CassandraORM
   def configure config
