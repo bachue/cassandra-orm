@@ -47,4 +47,12 @@ describe CassandraORM::Model do
                                      url: 'https://github.com/bachue/cassandra-orm.git', changelog: 'It can use now!',
                                      created_at: now
   end
+
+  it 'should be able to get all primary key values by #primary_key_hash' do
+    now = Time.now
+    upgrade = Upgrade.new product_name: 'cassandra-orm', version: '1.0', minimal_version: '0.0',
+                          url: 'https://github.com/bachue/cassandra-orm.git', changelog: 'It can use now!',
+                          created_at: now
+    expect(upgrade.primary_key_hash).to eq product_name: 'cassandra-orm', version: '1.0'
+  end
 end

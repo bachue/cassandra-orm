@@ -17,6 +17,12 @@ module CassandraORM
       end
     end
 
+    def primary_key_hash
+      self.class.primary_key.each_with_object({}) do |key, hash|
+        hash[key] = send key
+      end
+    end
+
     class << self
       def inherited base
         base.singleton_class.instance_exec do
