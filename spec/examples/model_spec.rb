@@ -1,5 +1,8 @@
 describe CassandraORM::Model do
   before :each do
+    Product = Class.new CassandraORM::Model do
+      set_primary_key :name
+    end
     Upgrade = Class.new CassandraORM::Model do
       set_primary_key :product_name, 'version'
       attributes :minimal_version, :url, 'changelog', 'created_at'
@@ -7,10 +10,12 @@ describe CassandraORM::Model do
   end
 
   it 'should return all attributes' do
+    expect(Product.attributes).to eq %i(name)
     expect(Upgrade.attributes).to eq %i(product_name version minimal_version url changelog created_at)
   end
 
   it 'should return the primary key' do
+    expect(Product.primary_key).to eq %i(name)
     expect(Upgrade.primary_key).to eq %i(product_name version)
   end
 
@@ -54,5 +59,10 @@ describe CassandraORM::Model do
                           url: 'https://github.com/bachue/cassandra-orm.git', changelog: 'It can use now!',
                           created_at: now
     expect(upgrade.primary_key_hash).to eq product_name: 'cassandra-orm', version: '1.0'
+  end
+
+  it 'should be able to calculate table name' do
+    expect(Product.table_name).to eq 'products'
+    expect(Upgrade.table_name).to eq 'upgrades'
   end
 end

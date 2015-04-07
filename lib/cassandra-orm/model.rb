@@ -1,5 +1,6 @@
 require 'cassandra-orm/base'
 require 'active_support/core_ext/hash/keys'
+require 'active_support/core_ext/string/inflections'
 
 module CassandraORM
   class Model
@@ -39,6 +40,10 @@ module CassandraORM
           def set_primary_key *keys
             attributes(*keys)
             @primary_key = keys.map(&:to_sym)
+          end
+
+          def table_name
+            name.tableize
           end
         end
         base.singleton_class.instance_exec do
