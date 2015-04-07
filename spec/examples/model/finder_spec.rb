@@ -29,6 +29,7 @@ describe CassandraORM::Model::Finder do
     expect(products.size).to be 3
     products.each do |product|
       expect(product).to be_a Product
+      expect(product).not_to be_new
       expect(%w(cassandra orm ruby)).to be_include product.name
     end
   end
@@ -52,6 +53,7 @@ describe CassandraORM::Model::Finder do
     expect(upgrades.size).to be 3
     upgrades.each do |upgrade|
       expect(upgrade).to be_a Upgrade
+      expect(upgrade).not_to be_new
       expect(upgrade.product_name).to eq 'cassandra'
       expect(upgrade.url).to eq 'http://cassandra.apache.org/'
       expect(upgrade.changelog).to match(/^changes for \d\.\d$/)
@@ -66,6 +68,7 @@ describe CassandraORM::Model::Finder do
   it 'should find single cassandra version' do
     upgrade = Upgrade.find product_name: 'cassandra', version: Cassandra::Tuple.new(3, 1)
     expect(upgrade).to be_a Upgrade
+    expect(upgrade).not_to be_new
     expect(upgrade.product_name).to eq 'cassandra'
     expect(upgrade.version).to eq Cassandra::Tuple.new(3, 1)
     expect(upgrade.minimal_version).to eq Cassandra::Tuple.new(2, 0)

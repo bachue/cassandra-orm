@@ -11,10 +11,11 @@ module CassandraORM
         keys = attributes & attrs.keys
         values = keys.map { |key| attrs[key] }
         limit = options.delete :limit
-        cql = cql_for_select table_name, keys, limit: limit
-        stmt = session.prepare cql
-        rows = session.execute stmt, options.merge(arguments: values)
-        rows.map { |row| new row }
+        _find_all(keys, values, limit: limit, **options).map do |row|
+          object = new row
+          object.instance_variable_set :@new_record, false
+          object
+        end
       end
 
       def find attrs, options = {}
@@ -23,7 +24,13 @@ module CassandraORM
 
     private
 
-      def cql_for_select table_name, keys, limit: nil
+      def _find_all keys, values, limit: nil, **options
+        cql = cql_for_select keys, limit: limit
+        stmt = session.prepare cql
+        session.execute stmt, options.merge(arguments: values)
+      end
+
+      def cql_for_select keys, limit: nil
         cql = "SELECT * FROM #{table_name}"
         cql << " WHERE #{keys.map { |key| "#{key} = ?" }.join(' AND ')}" unless keys.empty?
         cql << " LIMIT #{limit}" if limit
