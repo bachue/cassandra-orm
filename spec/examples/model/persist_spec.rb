@@ -15,9 +15,11 @@ describe CassandraORM::Model::Persist do
       expect(product).to be_nil
       product = Product.new name: 'cassandra'
       expect(product.save).to be true
+      expect(product.new?).to be false
       expect(product).not_to be_new
       expect(product.errors).to be_empty
       product = Product.find(name: 'cassandra')
+      expect(product.new?).to be false
       expect(product).not_to be_nil
       expect(product).not_to be_new
       expect(product.name).to eq 'cassandra'
@@ -29,6 +31,7 @@ describe CassandraORM::Model::Persist do
       upgrade = Upgrade.new product_name: 'cassandra', version: 1,
                             minimal_version: 0, url: 'http://cassandra.apache.org/'
       expect(upgrade.save).to be true
+      expect(upgrade.new?).to be false
       expect(upgrade.product_name).to eq 'cassandra'
       expect(upgrade.version).to eq 1
       expect(upgrade.minimal_version).to eq 0
@@ -39,16 +42,20 @@ describe CassandraORM::Model::Persist do
     it 'should be able to detect uniqueness conflict' do
       product = Product.new name: 'cassandra'
       expect(product.save).to be true
+      expect(product.new?).to be false
       product = Product.new name: 'cassandra'
       expect(product.save).to be false
+      expect(product.new?).to be true
       expect(product.errors).to match name: :unique
 
       upgrade = Upgrade.new product_name: 'cassandra', version: 1,
                             minimal_version: 0, url: 'http://cassandra.apache.org/'
       expect(upgrade.save).to be true
+      expect(upgrade.new?).to be false
       upgrade = Upgrade.new product_name: 'cassandra', version: 1,
                             minimal_version: 0, url: 'http://cassandra.apache.org/'
       expect(upgrade.save).to be false
+      expect(upgrade.new?).to be true
       expect(upgrade.errors).to match [:product_name, :version] => :unique
     end
   end
@@ -70,6 +77,15 @@ describe CassandraORM::Model::Persist do
     it 'should be able to update url of the upgrade' do
       expect(upgrade.new?).to be false
       expect { upgrade.url = 'http://www.datastax.com/' }.not_to raise_error
+    end
+
+    it 'should be able to save the new url' do
+      upgrade.url = 'http://www.datastax.com/'
+      expect(upgrade.save).to be true
+      expect(upgrade.new?).to be false
+      expect(upgrade.url).to eq 'http://www.datastax.com/'
+      upgrade = Upgrade.find product_name: 'cassandra', version: 1
+      expect(upgrade.url).to eq 'http://www.datastax.com/'
     end
   end
 end
