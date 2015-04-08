@@ -3,6 +3,7 @@ require 'cassandra-orm/model/finder'
 require 'cassandra-orm/model/persist'
 require 'active_support/core_ext/hash/keys'
 require 'active_support/core_ext/string/inflections'
+require 'active_support/core_ext/module/aliasing'
 
 module CassandraORM
   class Model < Base
@@ -14,7 +15,6 @@ module CassandraORM
     def initialize attrs = {}
       self.attributes = attrs
       @errors = {}
-      @new_record = true
     end
 
     def attributes
@@ -38,7 +38,7 @@ module CassandraORM
     end
 
     def new?
-      @new_record
+      !@persisted
     end
 
     def == right
@@ -61,11 +61,19 @@ module CassandraORM
             else
               attr_accessor(*names)
               @attributes.concat names.map(&:to_sym)
+              @attributes.uniq!
             end
           end
 
           def set_primary_key *keys
+            keys.uniq!
             attributes(*keys)
+            keys.each { |key|
+              define_method("#{key}_with_primary_key_check=") { |val|
+                new? ? send("#{key}_without_primary_key_check=", val) : fail(CannotUpdatePrimaryKey)
+              }
+              alias_method_chain "#{key}=", :primary_key_check
+            }
             @primary_key = keys.map(&:to_sym)
           end
 

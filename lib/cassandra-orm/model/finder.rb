@@ -7,14 +7,11 @@ module CassandraORM
       def find_all attrs = {}, options = {}
         attrs = attrs.symbolize_keys
         invalid = attrs.keys - attributes
-        fail InvalidAttributeError, "Attribute #{invalid.first} is invalid" unless invalid.empty?
-        keys = attributes & attrs.keys
+        keys = (attributes & attrs.keys) + invalid
         values = keys.map { |key| attrs[key] }
         limit = options.delete :limit
         _find_all(keys, values, limit: limit, **options).map do |row|
-          object = new row
-          object.instance_variable_set :@new_record, false
-          object
+          new(row).tap { |model| model.instance_variable_set(:@persisted, true) }
         end
       end
 

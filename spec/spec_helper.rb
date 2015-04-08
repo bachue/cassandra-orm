@@ -41,8 +41,8 @@ RSpec.configure do |config|
       CassandraORM.execute <<-CQL
         CREATE TABLE upgrades(
           product_name TEXT,
-          version frozen <tuple <bigint, bigint>>,
-          minimal_version frozen <tuple <bigint, bigint>>,
+          version bigint,
+          minimal_version bigint,
           url TEXT,
           changelog TEXT,
           created_at TIMESTAMP,

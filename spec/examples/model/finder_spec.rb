@@ -12,15 +12,15 @@ describe CassandraORM::Model::Finder do
     Product.session.execute 'INSERT INTO products(name) VALUES(\'ruby\')'
     Upgrade.session.execute <<-CQL
       INSERT INTO upgrades(product_name, version, minimal_version, url, changelog, created_at)
-      VALUES('cassandra', (2, 0), (1, 0), 'http://cassandra.apache.org/', 'changes for 2.0', dateof(NOW()))
+      VALUES('cassandra', 2, 1, 'http://cassandra.apache.org/', 'changes for 2.0', dateof(NOW()))
     CQL
     Upgrade.session.execute <<-CQL
       INSERT INTO upgrades(product_name, version, minimal_version, url, changelog, created_at)
-      VALUES('cassandra', (3, 0), (2, 0), 'http://cassandra.apache.org/', 'changes for 3.0', dateof(NOW()))
+      VALUES('cassandra', 3, 2, 'http://cassandra.apache.org/', 'changes for 3.0', dateof(NOW()))
     CQL
     Upgrade.session.execute <<-CQL
       INSERT INTO upgrades(product_name, version, minimal_version, url, changelog, created_at)
-      VALUES('cassandra', (3, 1), (2, 0), 'http://cassandra.apache.org/', 'changes for 3.1', dateof(NOW()))
+      VALUES('cassandra', 4, 3, 'http://cassandra.apache.org/', 'changes for 4.0', dateof(NOW()))
     CQL
   end
 
@@ -45,11 +45,7 @@ describe CassandraORM::Model::Finder do
 
   it 'should find all cassandra versions' do
     upgrades = Upgrade.find_all product_name: 'cassandra'
-    all_versions = {
-      [2, 0] => Cassandra::Tuple.new(1,0),
-      [3, 0] => Cassandra::Tuple.new(2,0),
-      [3, 1] => Cassandra::Tuple.new(2,0)
-    }
+    all_versions = { 2 => 1, 3 => 2, 4 => 3 }
     expect(upgrades.size).to be 3
     upgrades.each do |upgrade|
       expect(upgrade).to be_a Upgrade
@@ -57,8 +53,8 @@ describe CassandraORM::Model::Finder do
       expect(upgrade.product_name).to eq 'cassandra'
       expect(upgrade.url).to eq 'http://cassandra.apache.org/'
       expect(upgrade.changelog).to match(/^changes for \d\.\d$/)
-      expect(all_versions.keys).to be_include upgrade.version.to_a
-      expect(upgrade.minimal_version).to eq all_versions[upgrade.version.to_a]
+      expect(all_versions.keys).to be_include upgrade.version
+      expect(upgrade.minimal_version).to eq all_versions[upgrade.version]
     end
 
     upgrades = Upgrade.find_all product_name: 'orm'
@@ -66,21 +62,17 @@ describe CassandraORM::Model::Finder do
   end
 
   it 'should find single cassandra version' do
-    upgrade = Upgrade.find product_name: 'cassandra', version: Cassandra::Tuple.new(3, 1)
+    upgrade = Upgrade.find product_name: 'cassandra', version: 4
     expect(upgrade).to be_a Upgrade
     expect(upgrade).not_to be_new
     expect(upgrade.product_name).to eq 'cassandra'
-    expect(upgrade.version).to eq Cassandra::Tuple.new(3, 1)
-    expect(upgrade.minimal_version).to eq Cassandra::Tuple.new(2, 0)
+    expect(upgrade.version).to eq 4
+    expect(upgrade.minimal_version).to eq 3
     expect(upgrade.url).to eq 'http://cassandra.apache.org/'
-    expect(upgrade.changelog).to eq 'changes for 3.1'
-  end
-
-  it 'should raise if any invalid key exists' do
-    expect { Upgrade.find product_name: 'cassandra', not_exist: true }.to raise_error CassandraORM::InvalidAttributeError
+    expect(upgrade.changelog).to eq 'changes for 4.0'
   end
 
   it 'should not search by non-index key' do
-    expect { Upgrade.find product_name: 'cassandra', minimal_version: Cassandra::Tuple.new(2, 0) }.to raise_error Cassandra::Errors::InvalidError
+    expect { Upgrade.find product_name: 'cassandra', minimal_version: 2 }.to raise_error Cassandra::Errors::InvalidError
   end
 end

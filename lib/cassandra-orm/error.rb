@@ -1,4 +1,4 @@
 module CassandraORM
   class Error < RuntimeError; end
-  class InvalidAttributeError < Error; end
+  class CannotUpdatePrimaryKey < RuntimeError; end
 end
