@@ -7,15 +7,20 @@ module CassandraORM
         new? || options[:exclusive] ? _create(options) : _update(options)
       end
 
-      def destroy
+      def destroy **options
         hash = primary_key_hash
         keys, values = hash.keys, hash.values
-        cql = cql_for_delete keys
+        conditions = options.delete(:if) || {}
+        cql = cql_for_delete keys, conditions.keys
         stmt = session.prepare cql
-        session.execute stmt, arguments: values
-        @errors.clear
-        @persisted = nil
-        true
+        row = session.execute(stmt, arguments:(values + conditions.values)).first
+        if conditions.empty? || row['[applied]']
+          @errors.clear
+          @persisted = nil
+          true
+        else
+          append_error :'[failed]', :conditions
+        end
       end
 
     private
@@ -30,8 +35,7 @@ module CassandraORM
           @errors.clear
           @persisted = true
         else
-          primary_key = self.class.primary_key
-          append_error (primary_key.size == 1 ? primary_key.first : primary_key), :unique
+          append_error :'[failed]', :unique
         end
       end
 
@@ -40,12 +44,18 @@ module CassandraORM
         keys = self.class.attributes - self.class.primary_key
         values = keys.map { |key| attrs[key] }
         primary_key_values = self.class.primary_key.map { |key| attrs[key] }
-        cql = cql_for_update keys, self.class.primary_key
+        conditions = options.delete(:if) || {}
+        cql = cql_for_update keys, self.class.primary_key, conditions.keys
         stmt = session.prepare cql
-        session.execute stmt, options.merge(arguments: values + primary_key_values)
-        @errors.clear
-        @persisted = true
-        true
+        values += primary_key_values + conditions.values
+        row = session.execute(stmt, options.merge(arguments: values)).first
+        if conditions.empty? || row['[applied]']
+          @errors.clear
+          @persisted = true
+          true
+        else
+          append_error :'[failed]', :conditions
+        end
       end
 
       def cql_for_insert keys, exclusive: false
@@ -55,15 +65,19 @@ module CassandraORM
         cql
       end
 
-      def cql_for_update keys, primary_keys
-        "UPDATE #{self.class.table_name}" <<
-        " SET #{keys.map { |key| "#{key} = ?" }.join(', ')}" <<
-        " WHERE " << primary_keys.map { |key| "#{key} = ?" }.join(' AND ')
+      def cql_for_update keys, primary_keys, conditions
+        cql = "UPDATE #{self.class.table_name}" <<
+              " SET #{keys.map { |key| "#{key} = ?" }.join(', ')}" <<
+              ' WHERE ' << primary_keys.map { |key| "#{key} = ?" }.join(' AND ')
+        cql << ' IF ' << conditions.map { |key| "#{key} = ?" }.join(' AND ') unless conditions.empty?
+        cql
       end
 
-      def cql_for_delete primary_keys
-        "DELETE FROM #{self.class.table_name}" <<
-        " WHERE " << primary_keys.map { |key| "#{key} = ?" }.join(' AND ')
+      def cql_for_delete primary_keys, conditions
+        cql = "DELETE FROM #{self.class.table_name}" <<
+              ' WHERE ' << primary_keys.map { |key| "#{key} = ?" }.join(' AND ')
+        cql << ' IF ' << conditions.map { |key| "#{key} = ?" }.join(' AND ') unless conditions.empty?
+        cql
       end
     end
   end
