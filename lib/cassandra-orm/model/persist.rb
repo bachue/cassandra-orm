@@ -15,7 +15,8 @@ module CassandraORM
         conditions = options.delete(:if) || {}
         cql = cql_for_delete keys, conditions.keys
         stmt = session.prepare cql
-        row = session.execute(stmt, arguments:(values + conditions.values)).first
+        values += conditions.values
+        row = execute('destroy', stmt, arguments: values).first
         if conditions.empty? || row['[applied]']
           @persisted = nil
           true
@@ -40,7 +41,7 @@ module CassandraORM
         exclusive = options.delete :exclusive
         cql = cql_for_insert attrs.keys, exclusive: exclusive
         stmt = session.prepare cql
-        row = session.execute(stmt, options.merge(arguments: attrs.values)).first
+        row = execute('create', stmt, options.merge(arguments: attrs.values)).first
         if !exclusive || row['[applied]']
           @persisted = true
         else
@@ -60,7 +61,7 @@ module CassandraORM
         cql = cql_for_update keys, self.class.primary_key, conditions.keys
         stmt = session.prepare cql
         values += primary_key_values + conditions.values
-        row = session.execute(stmt, options.merge(arguments: values)).first
+        row = execute('update', stmt, options.merge(arguments: values)).first
         if conditions.empty? || row['[applied]']
           @persisted = true
           true

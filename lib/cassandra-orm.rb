@@ -9,8 +9,8 @@ module CassandraORM
     Base.connect
   end
 
-  def execute cql, options = {}
-    Base.session.execute cql, options
+  def execute identifier, cql, options = {}
+    Model.execute identifier, cql, options
   end
 
   module_function :configure, :connect, :execute

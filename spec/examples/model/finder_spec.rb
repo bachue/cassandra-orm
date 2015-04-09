@@ -7,18 +7,18 @@ describe CassandraORM::Model::Finder do
       set_primary_key :product_name, :version
       attributes :minimal_version, :url, :changelog
     end
-    Product.session.execute 'INSERT INTO products(name) VALUES(\'cassandra\')'
-    Product.session.execute 'INSERT INTO products(name) VALUES(\'orm\')'
-    Product.session.execute 'INSERT INTO products(name) VALUES(\'ruby\')'
-    Upgrade.session.execute <<-CQL
+    Product.execute 'initialize', 'INSERT INTO products(name) VALUES(\'cassandra\')'
+    Product.execute 'initialize', 'INSERT INTO products(name) VALUES(\'orm\')'
+    Product.execute 'initialize', 'INSERT INTO products(name) VALUES(\'ruby\')'
+    Upgrade.execute 'initialize', <<-CQL
       INSERT INTO upgrades(product_name, version, minimal_version, url, changelog)
       VALUES('cassandra', 2, 1, 'http://cassandra.apache.org/', 'changes for 2.0')
     CQL
-    Upgrade.session.execute <<-CQL
+    Upgrade.execute 'initialize', <<-CQL
       INSERT INTO upgrades(product_name, version, minimal_version, url, changelog)
       VALUES('cassandra', 3, 2, 'http://cassandra.apache.org/', 'changes for 3.0')
     CQL
-    Upgrade.session.execute <<-CQL
+    Upgrade.execute 'initialize', <<-CQL
       INSERT INTO upgrades(product_name, version, minimal_version, url, changelog)
       VALUES('cassandra', 4, 3, 'http://cassandra.apache.org/', 'changes for 4.0')
     CQL

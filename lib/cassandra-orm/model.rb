@@ -1,4 +1,5 @@
 require 'cassandra-orm/base'
+require 'cassandra-orm/logger'
 require 'cassandra-orm/model/finder'
 require 'cassandra-orm/model/persist'
 require 'active_support/core_ext/hash/keys'
@@ -9,10 +10,12 @@ module CassandraORM
   class Model < Base
     extend Finder
     include Persist
+    include Logger
 
     attr_reader :errors
 
     def initialize attrs = {}
+      fail 'Cannot instantiate CassandraORM::Model' if self == Model
       self.attributes = attrs
       @errors = {}
     end
@@ -68,7 +71,7 @@ module CassandraORM
 
     class << self
       def inherited base
-        base.instance_exec do
+        base.singleton_class.class_exec do
           def attributes *names
             @attributes ||= []
             if names.empty?
@@ -80,6 +83,7 @@ module CassandraORM
             end
           end
 
+          attr_reader :primary_key
           def set_primary_key *keys
             keys.uniq!
             attributes(*keys)
@@ -91,14 +95,11 @@ module CassandraORM
             }
             @primary_key = keys.map(&:to_sym)
           end
+          private :set_primary_key
 
           def table_name
             name.tableize
           end
-        end
-        base.singleton_class.instance_exec do
-          attr_reader :primary_key
-          private :set_primary_key
         end
       end
     end

@@ -24,7 +24,7 @@ module CassandraORM
       def _find_all keys, values, limit: nil, **options
         cql = cql_for_select keys, limit: limit
         stmt = session.prepare cql
-        session.execute stmt, options.merge(arguments: values)
+        execute 'find', stmt, options.merge(arguments: values)
       end
 
       def cql_for_select keys, limit: nil

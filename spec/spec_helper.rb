@@ -16,7 +16,7 @@ path = Pathname File.expand_path 'cassandra.yml', __dir__
 if path.exist?
   CASSANDRA_CONFIG = YAML.load(ERB.new(path.read).result)
 else
-  CASSANDRA_CONFIG = {keyspace: 'test'}
+  CASSANDRA_CONFIG = {keyspace: 'test', logger: Logger.new('/tmp/cassandra_orm.log')}
 end
 
 require_relative '../lib/cassandra-orm'
@@ -26,7 +26,7 @@ RSpec.configure do |config|
     begin
       CassandraORM.configure CASSANDRA_CONFIG.merge keyspace: 'system'
       CassandraORM.connect
-      CassandraORM.execute <<-CQL
+      CassandraORM.execute 'initialize', <<-CQL
         CREATE KEYSPACE #{CASSANDRA_CONFIG[:keyspace]}
         WITH replication = {
           'class': 'SimpleStrategy',
@@ -35,10 +35,10 @@ RSpec.configure do |config|
       CQL
       CassandraORM.configure CASSANDRA_CONFIG
       CassandraORM.connect
-      CassandraORM.execute <<-CQL
+      CassandraORM.execute 'initialize', <<-CQL
         CREATE TABLE products(name TEXT PRIMARY KEY)
       CQL
-      CassandraORM.execute <<-CQL
+      CassandraORM.execute 'initialize', <<-CQL
         CREATE TABLE upgrades(
           product_name TEXT,
           version bigint,
@@ -49,7 +49,7 @@ RSpec.configure do |config|
         )
       CQL
     rescue Cassandra::Errors::AlreadyExistsError
-      CassandraORM.execute <<-CQL
+      CassandraORM.execute 'clear', <<-CQL
         DROP KEYSPACE #{CASSANDRA_CONFIG[:keyspace]}
       CQL
       retry
@@ -62,7 +62,7 @@ RSpec.configure do |config|
     end
     CassandraORM.configure CASSANDRA_CONFIG.merge keyspace: 'system'
     CassandraORM.connect
-    CassandraORM.execute <<-CQL
+    CassandraORM.execute 'clear', <<-CQL
       DROP KEYSPACE #{CASSANDRA_CONFIG[:keyspace]}
     CQL
   end
