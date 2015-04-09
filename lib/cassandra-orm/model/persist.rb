@@ -8,6 +8,8 @@ module CassandraORM
       end
 
       def destroy **options
+        @errors.clear
+        return false if before_destroy == false
         hash = primary_key_hash
         keys, values = hash.keys, hash.values
         conditions = options.delete(:if) || {}
@@ -15,7 +17,6 @@ module CassandraORM
         stmt = session.prepare cql
         row = session.execute(stmt, arguments:(values + conditions.values)).first
         if conditions.empty? || row['[applied]']
-          @errors.clear
           @persisted = nil
           true
         else
@@ -23,16 +24,24 @@ module CassandraORM
         end
       end
 
+      # Callbacks
+      %w(save destroy create update).each do |function|
+        define_method(:"before_#{function}") { true }
+        private :"before_#{function}"
+      end
+
     private
 
       def _create options
+        @errors.clear
+        return false if before_create == false
+        return false if before_save == false
         attrs = attributes
         exclusive = options.delete :exclusive
         cql = cql_for_insert attrs.keys, exclusive: exclusive
         stmt = session.prepare cql
         row = session.execute(stmt, options.merge(arguments: attrs.values)).first
         if !exclusive || row['[applied]']
-          @errors.clear
           @persisted = true
         else
           append_error :'[failed]', :unique
@@ -40,6 +49,9 @@ module CassandraORM
       end
 
       def _update options
+        @errors.clear
+        return false if before_update == false
+        return false if before_save == false
         attrs = attributes
         keys = self.class.attributes - self.class.primary_key
         values = keys.map { |key| attrs[key] }
@@ -50,7 +62,6 @@ module CassandraORM
         values += primary_key_values + conditions.values
         row = session.execute(stmt, options.merge(arguments: values)).first
         if conditions.empty? || row['[applied]']
-          @errors.clear
           @persisted = true
           true
         else

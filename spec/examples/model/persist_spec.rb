@@ -125,6 +125,41 @@ describe CassandraORM::Model::Persist do
     end
   end
 
+  context 'validation' do
+    before :each do
+      Upgrade.class_exec do
+        def before_save
+          return append_error(:minimal_version, :presence) unless @minimal_version
+          return append_error(:minimal_version, :smaller) unless @minimal_version < @version
+        end
+
+        def before_update
+          return append_error(:url, :presence) unless @url
+          return append_error(:url, :format) unless @url.start_with?('http://')
+        end
+      end
+    end
+
+    it 'should be able to validate' do
+      upgrade = Upgrade.new product_name: 'cassandra', version: 1
+      expect(upgrade.save).to be false
+      expect(upgrade.errors).to eq minimal_version: :presence
+      upgrade.minimal_version = 1
+      expect(upgrade.save).to be false
+      expect(upgrade.errors).to eq minimal_version: :smaller
+      upgrade.minimal_version = 0
+      expect(upgrade.save).to be true
+      expect(upgrade.errors).to be_empty
+      expect(upgrade.save).to be false
+      expect(upgrade.errors).to eq url: :presence
+      upgrade.url = 'https://cassandra.apache.org'
+      expect(upgrade.save).to be false
+      expect(upgrade.errors).to eq url: :format
+      upgrade.url = 'http://cassandra.apache.org'
+      expect(upgrade.save).to be true
+    end
+  end
+
   context 'destroy' do
     let(:upgrade) { Upgrade.new(product_name: 'cassandra', version: 1, minimal_version: 0,
                                 url: 'http://cassandra.apache.org', changelog: 'Changelog for 1.0').tap(&:save) }
