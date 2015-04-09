@@ -45,7 +45,6 @@ RSpec.configure do |config|
           minimal_version bigint,
           url TEXT,
           changelog TEXT,
-          created_at TIMESTAMP,
           PRIMARY KEY (product_name, version)
         )
       CQL

@@ -5,7 +5,7 @@ describe CassandraORM::Model::Persist do
     end
     Upgrade = Class.new CassandraORM::Model do
       set_primary_key :product_name, :version
-      attributes :minimal_version, :url, :changelog, :created_at
+      attributes :minimal_version, :url, :changelog
     end
   end
 

@@ -25,8 +25,7 @@ module CassandraORM
 
     def attributes= attrs
       attrs = attrs.symbolize_keys
-      keys = self.class.attributes & attrs.keys
-      keys.each do |attr|
+      self.class.attributes.each do |attr|
         send "#{attr}=", attrs[attr]
       end
     end
@@ -49,6 +48,22 @@ module CassandraORM
     def append_error key, value
       @errors.merge! key => value
       false
+    end
+
+    def reload
+      hash = primary_key_hash
+      keys, values = hash.keys, hash.values
+      row = self.class.send(:_find_all, keys, values, limit: 1).first
+      if row
+        self.attributes = row
+        @errors.clear
+        @persisted = true
+        self
+      else
+        @errors.clear
+        @persisted = nil
+        false
+      end
     end
 
     class << self

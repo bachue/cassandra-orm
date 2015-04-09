@@ -5,22 +5,22 @@ describe CassandraORM::Model::Finder do
     end
     Upgrade = Class.new CassandraORM::Model do
       set_primary_key :product_name, :version
-      attributes :minimal_version, :url, :changelog, :created_at
+      attributes :minimal_version, :url, :changelog
     end
     Product.session.execute 'INSERT INTO products(name) VALUES(\'cassandra\')'
     Product.session.execute 'INSERT INTO products(name) VALUES(\'orm\')'
     Product.session.execute 'INSERT INTO products(name) VALUES(\'ruby\')'
     Upgrade.session.execute <<-CQL
-      INSERT INTO upgrades(product_name, version, minimal_version, url, changelog, created_at)
-      VALUES('cassandra', 2, 1, 'http://cassandra.apache.org/', 'changes for 2.0', dateof(NOW()))
+      INSERT INTO upgrades(product_name, version, minimal_version, url, changelog)
+      VALUES('cassandra', 2, 1, 'http://cassandra.apache.org/', 'changes for 2.0')
     CQL
     Upgrade.session.execute <<-CQL
-      INSERT INTO upgrades(product_name, version, minimal_version, url, changelog, created_at)
-      VALUES('cassandra', 3, 2, 'http://cassandra.apache.org/', 'changes for 3.0', dateof(NOW()))
+      INSERT INTO upgrades(product_name, version, minimal_version, url, changelog)
+      VALUES('cassandra', 3, 2, 'http://cassandra.apache.org/', 'changes for 3.0')
     CQL
     Upgrade.session.execute <<-CQL
-      INSERT INTO upgrades(product_name, version, minimal_version, url, changelog, created_at)
-      VALUES('cassandra', 4, 3, 'http://cassandra.apache.org/', 'changes for 4.0', dateof(NOW()))
+      INSERT INTO upgrades(product_name, version, minimal_version, url, changelog)
+      VALUES('cassandra', 4, 3, 'http://cassandra.apache.org/', 'changes for 4.0')
     CQL
   end
 
