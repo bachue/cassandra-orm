@@ -7,6 +7,16 @@ module CassandraORM
         new? ? _create(options) : _update(options)
       end
 
+      def destroy
+        hash = primary_key_hash
+        keys, values = hash.keys, hash.values
+        cql = cql_for_delete keys
+        stmt = session.prepare cql
+        session.execute stmt, arguments: values
+        @persisted = false
+        true
+      end
+
     private
 
       def _create options
@@ -43,6 +53,11 @@ module CassandraORM
       def cql_for_update keys, primary_keys
         "UPDATE #{self.class.table_name}" <<
         " SET #{keys.map { |key| "#{key} = ?" }.join(', ')}" <<
+        " WHERE " << primary_keys.map { |key| "#{key} = ?" }.join(' AND ')
+      end
+
+      def cql_for_delete primary_keys
+        "DELETE FROM #{self.class.table_name}" <<
         " WHERE " << primary_keys.map { |key| "#{key} = ?" }.join(' AND ')
       end
     end

@@ -88,4 +88,32 @@ describe CassandraORM::Model::Persist do
       expect(upgrade.url).to eq 'http://www.datastax.com/'
     end
   end
+
+  context 'destroy' do
+    let(:upgrade) { Upgrade.new(product_name: 'cassandra', version: 1, minimal_version: 0,
+                                url: 'http://cassandra.apache.org', changelog: 'Changelog for 1.0').tap(&:save) }
+
+    it 'should be able to destroy the upgrade' do
+      expect(upgrade.new?).to be false
+      expect(upgrade.destroy).to be true
+      expect(upgrade.new?).to be true
+      expect(Upgrade.find(product_name: 'cassandra', version: 1)).to be_nil
+    end
+
+    it 'should be able to destroy new object even no effect' do
+      product = Product.new name: 'cassandra'
+      expect(product.destroy).to be true
+    end
+
+    it 'should be able to delete one object twice even no effect' do
+      expect(upgrade.destroy).to be true
+      expect(upgrade.destroy).to be true
+    end
+
+    it 'should still be able to delete a deleted object' do
+      upgrade2 = upgrade.dup
+      expect(upgrade.destroy).to be true
+      expect(upgrade2.destroy).to be true
+    end
+  end
 end
