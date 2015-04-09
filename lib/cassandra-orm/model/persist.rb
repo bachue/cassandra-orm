@@ -4,7 +4,7 @@ module CassandraORM
   class Model < Base
     module Persist
       def save **options
-        new? ? _create(options) : _update(options)
+        new? || options[:exclusive] ? _create(options) : _update(options)
       end
 
       def destroy

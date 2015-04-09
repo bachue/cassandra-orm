@@ -56,7 +56,7 @@ describe CassandraORM::Model::Persist do
                             minimal_version: 0, url: 'http://cassandra.apache.org/'
       expect(upgrade.save(exclusive: true)).to be false
       expect(upgrade.new?).to be true
-      expect(upgrade.errors).to match [:product_name, :version] => :unique
+      expect(upgrade.errors).to match %i(product_name version) => :unique
     end
 
     it 'should clear errors when save a model successfully' do
@@ -97,6 +97,13 @@ describe CassandraORM::Model::Persist do
       expect(upgrade.url).to eq 'http://www.datastax.com/'
       upgrade = Upgrade.find product_name: 'cassandra', version: 1
       expect(upgrade.url).to eq 'http://www.datastax.com/'
+    end
+
+    it 'should not add :exclusive option when try to update' do
+      upgrade.url = 'http://www.datastax.com/'
+      expect(upgrade.save(exclusive: true)).to be false
+      expect(upgrade.errors).to match %i(product_name version) => :unique
+      expect(upgrade.save).to be true
     end
 
     it 'should still be able to update unexisted model' do
