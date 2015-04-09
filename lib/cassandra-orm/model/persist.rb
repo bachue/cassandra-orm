@@ -13,7 +13,8 @@ module CassandraORM
         cql = cql_for_delete keys
         stmt = session.prepare cql
         session.execute stmt, arguments: values
-        @persisted = false
+        @errors.clear
+        @persisted = nil
         true
       end
 
@@ -21,12 +22,12 @@ module CassandraORM
 
       def _create options
         attrs = attributes
-        keys, values = attrs.keys, attrs.values
-        cql = cql_for_insert keys
+        exclusive = options.delete :exclusive
+        cql = cql_for_insert attrs.keys, exclusive: exclusive
         stmt = session.prepare cql
-        rows = session.execute stmt, options.merge(arguments: values)
-        row = rows.first
-        if row['[applied]']
+        row = session.execute(stmt, options.merge(arguments: attrs.values)).first
+        if !exclusive || row['[applied]']
+          @errors.clear
           @persisted = true
         else
           primary_key = self.class.primary_key
@@ -42,12 +43,16 @@ module CassandraORM
         cql = cql_for_update keys, self.class.primary_key
         stmt = session.prepare cql
         session.execute stmt, options.merge(arguments: values + primary_key_values)
+        @errors.clear
+        @persisted = true
         true
       end
 
-      def cql_for_insert keys
-        "INSERT INTO #{self.class.table_name}" <<
-        "(#{keys.join(', ')}) VALUES(#{keys.map {'?'}.join(', ')}) IF NOT EXISTS"
+      def cql_for_insert keys, exclusive: false
+        cql = "INSERT INTO #{self.class.table_name}" <<
+              "(#{keys.join(', ')}) VALUES(#{keys.map {'?'}.join(', ')})"
+        cql << ' IF NOT EXISTS' if exclusive
+        cql
       end
 
       def cql_for_update keys, primary_keys

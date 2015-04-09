@@ -44,19 +44,30 @@ describe CassandraORM::Model::Persist do
       expect(product.save).to be true
       expect(product.new?).to be false
       product = Product.new name: 'cassandra'
-      expect(product.save).to be false
+      expect(product.save(exclusive: true)).to be false
       expect(product.new?).to be true
       expect(product.errors).to match name: :unique
 
       upgrade = Upgrade.new product_name: 'cassandra', version: 1,
                             minimal_version: 0, url: 'http://cassandra.apache.org/'
-      expect(upgrade.save).to be true
+      expect(upgrade.save(exclusive: true)).to be true
       expect(upgrade.new?).to be false
       upgrade = Upgrade.new product_name: 'cassandra', version: 1,
                             minimal_version: 0, url: 'http://cassandra.apache.org/'
-      expect(upgrade.save).to be false
+      expect(upgrade.save(exclusive: true)).to be false
       expect(upgrade.new?).to be true
       expect(upgrade.errors).to match [:product_name, :version] => :unique
+    end
+
+    it 'should clear errors when save a model successfully' do
+      product1 = Product.new name: 'cassandra'
+      expect(product1.save(exclusive: true)).to be true
+      product2 = Product.new name: 'cassandra'
+      expect(product2.save(exclusive: true)).to be false
+      expect(product2.errors).to match name: :unique
+      expect(product1.destroy).to be true
+      expect(product2.save(exclusive: true)).to be true
+      expect(product2.errors).to be_empty
     end
   end
 
@@ -87,6 +98,15 @@ describe CassandraORM::Model::Persist do
       upgrade = Upgrade.find product_name: 'cassandra', version: 1
       expect(upgrade.url).to eq 'http://www.datastax.com/'
     end
+
+    it 'should still be able to update unexisted model' do
+      upgrade2 = upgrade.dup
+      expect(upgrade2.destroy).to be true
+      upgrade.url = 'http://www.datastax.com/'
+      expect(upgrade.save).to be true
+    end
+
+    it 'should not be able to update unexisted model when condition is applied'
   end
 
   context 'destroy' do
@@ -114,6 +134,17 @@ describe CassandraORM::Model::Persist do
       upgrade2 = upgrade.dup
       expect(upgrade.destroy).to be true
       expect(upgrade2.destroy).to be true
+    end
+
+    it 'should clear errors when delete a model successfully' do
+      product = Product.new name: 'cassandra'
+      expect(product.save(exclusive: true)).to be true
+      product = Product.new name: 'cassandra'
+      expect(product.save(exclusive: true)).to be false
+      expect(product.errors).to match name: :unique
+      expect(product.destroy).to be true
+      expect(product.new?).to be true
+      expect(product.errors).to be_empty
     end
   end
 end
