@@ -14,7 +14,7 @@ module CassandraORM
         config = config.symbolize_keys
         self.keyspace = config.delete :keyspace
         fail 'keyspace is required' unless keyspace
-        self.cluster = Cassandra.cluster config
+        self.cluster = Cassandra.cluster config.merge(page_size: nil)
       end
 
       def connect
