@@ -25,6 +25,14 @@ module CassandraORM
         result
       end
 
+      def all options = {}
+        find_all({}, options)
+      end
+
+      def first options = {}
+        all(limit: 1).first
+      end
+
     private
 
       def _find_all keys, values, limit: nil, **options

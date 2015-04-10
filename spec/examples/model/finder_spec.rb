@@ -25,13 +25,24 @@ describe CassandraORM::Model::Finder do
   end
 
   it 'should list all products' do
-    products = Product.find_all
+    products = Product.all
     expect(products.size).to be 3
     products.each do |product|
       expect(product).to be_a Product
       expect(product).not_to be_new
       expect(%w(cassandra orm ruby)).to be_include product.name
     end
+  end
+
+  it 'should list first n products' do
+    products = Product.all limit: 2
+    expect(products.size).to be 2
+
+    products = Product.all limit: 1
+    expect(products.size).to be 1
+
+    product = Product.first
+    expect(product).to be_a Product
   end
 
   it 'should be find product by name' do
