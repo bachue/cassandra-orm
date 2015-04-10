@@ -1,3 +1,9 @@
 language: ruby
 rvm:
   - 2.2.1
+script: 'bundle exec rake test'
+before_install:
+  - sudo service cassandra start
+bundler_args: '--without=debug'
+services:
+  - cassandra
