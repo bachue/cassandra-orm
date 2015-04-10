@@ -16,9 +16,12 @@ module CassandraORM
 
     def initialize attrs = {}
       fail 'Cannot instantiate CassandraORM::Model' if self == Model
-      self.attributes = attrs
-      attrs.each { |k, v| instance_variable_set :"@#{k}", v }
+      set attrs
       @errors = {}
+    end
+
+    def set attrs
+      attrs.each { |k, v| instance_variable_set :"@#{k}", v }
     end
 
     def attributes
