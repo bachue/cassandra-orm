@@ -55,13 +55,16 @@ module CassandraORM
         @errors.clear
         return false if send_callback(:before_create) == false
         return false if send_callback(:before_save) == false
+        only = options.delete :only
         attrs = attributes
-        exclusive = options.delete :exclusive
+        attrs.slice!(*(Array(only).map(&:to_sym) + self.class.primary_key)) if only
+        to_reload, exclusive = options.delete(:reload), options.delete(:exclusive)
         cql = cql_for_insert attrs.keys, exclusive: exclusive
         stmt = session.prepare cql
         row = execute('create', stmt, options.merge(arguments: attrs.values)).first
         if !exclusive || row['[applied]']
           @persisted = true
+          to_reload ? reload : true
         else
           append_error :'[failed]', :unique
         end
@@ -71,18 +74,20 @@ module CassandraORM
         @errors.clear
         return false if send_callback(:before_update) == false
         return false if send_callback(:before_save) == false
+        only = options.delete :only
         attrs = attributes
         keys = self.class.attributes - self.class.primary_key
+        keys &= Array(only).map(&:to_sym) if only
         values = keys.map { |key| attrs[key] }
         primary_key_values = self.class.primary_key.map { |key| attrs[key] }
-        conditions = options.delete(:if) || {}
+        to_reload, conditions = options.delete(:reload), options.delete(:if) || {}
         cql = cql_for_update keys, self.class.primary_key, conditions.keys
         stmt = session.prepare cql
         values += primary_key_values + conditions.values
         row = execute('update', stmt, options.merge(arguments: values)).first
         if conditions.empty? || row['[applied]']
           @persisted = true
-          true
+          to_reload ? reload : true
         else
           append_error :'[failed]', :conditions
         end

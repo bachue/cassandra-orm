@@ -96,7 +96,11 @@ module CassandraORM
             attributes(*keys)
             keys.each { |key|
               define_method("#{key}_with_primary_key_check=") { |val|
-                new? ? send("#{key}_without_primary_key_check=", val) : fail(CannotUpdatePrimaryKey)
+                if new?
+                  send("#{key}_without_primary_key_check=", val)
+                elsif send(key) != val
+                  fail(CannotUpdatePrimaryKey)
+                end
               }
               alias_method_chain "#{key}=", :primary_key_check
             }

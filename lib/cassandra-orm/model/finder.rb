@@ -30,7 +30,7 @@ module CassandraORM
       end
 
       def first options = {}
-        all(limit: 1).first
+        find({}, options)
       end
 
       def count

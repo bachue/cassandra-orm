@@ -89,6 +89,27 @@ describe CassandraORM::Model::Persist do
       expect(product2.save(exclusive: true)).to be true
       expect(product2.errors).to be_empty
     end
+
+    it 'could insert part of data' do
+      upgrade = Upgrade.new product_name: 'cassandra', version: 1, minimal_version: 0
+      expect(upgrade.save).to be true
+      upgrade = Upgrade.new product_name: 'cassandra', version: 1, url: 'http://cassandra.apache.org'
+      expect(upgrade.save(only: :url)).to be true
+      expect(upgrade.minimal_version).to be_nil # not reload
+      upgrade = Upgrade.find product_name: 'cassandra', version: 1
+      expect(upgrade).to be_an Upgrade
+      expect(upgrade.minimal_version).to be 0
+      expect(upgrade.url).to eq 'http://cassandra.apache.org'
+    end
+
+    it 'could insert part of data and then save & reload' do
+      upgrade = Upgrade.new product_name: 'cassandra', version: 1, minimal_version: 0
+      expect(upgrade.save).to be true
+      upgrade = Upgrade.new product_name: 'cassandra', version: 1, url: 'http://cassandra.apache.org'
+      expect(upgrade.save(only: :url, reload: true)).to be_an Upgrade
+      expect(upgrade.minimal_version).to be 0
+      expect(upgrade.url).to eq 'http://cassandra.apache.org'
+    end
   end
 
   context 'update' do
@@ -149,6 +170,26 @@ describe CassandraORM::Model::Persist do
       expect(upgrade.save(if: {url: 'http://cassandra.apache.org'})).to be false
       expect(upgrade.errors).to match '[failed]': :conditions
       expect(Upgrade.find(product_name: 'cassandra', version: 1)).to be_nil
+    end
+
+    it 'could update part of data' do
+      upgrade.url = 'http://www.datastax.com/'
+      upgrade.changelog = 'Changelog for DSE 1.0'
+      expect(upgrade.save(only: :url)).to be true
+      expect(upgrade.url).to eq 'http://www.datastax.com/'
+      expect(upgrade.changelog).to eq 'Changelog for DSE 1.0'
+      upgrade = Upgrade.find product_name: 'cassandra', version: 1
+      expect(upgrade).to be_an Upgrade
+      expect(upgrade.url).to eq 'http://www.datastax.com/'
+      expect(upgrade.changelog).to eq 'Changelog for 1.0'
+    end
+
+    it 'could insert part of data and then save & reload' do
+      upgrade.url = 'http://www.datastax.com/'
+      upgrade.changelog = 'Changelog for DSE 1.0'
+      expect(upgrade.save(only: :url, reload: true)).to be_an Upgrade
+      expect(upgrade.url).to eq 'http://www.datastax.com/'
+      expect(upgrade.changelog).to eq 'Changelog for 1.0'
     end
   end
 
