@@ -1,4 +1,4 @@
-# Cassandra::Orm
+# CassandraORM
 
 A simple Cassandra ORM library, which can provide with a CRUD model to operate Cassandra. Based on [cassandra-driver](https://github.com/datastax/ruby-driver.git).
 
@@ -29,7 +29,7 @@ require 'logger'
 CassandraORM.configure keyspace: 'test', logger: Logger.new(STDERR)
 CassandraORM.connect
 
-class User
+class User < CassandraORM::Model
   set_primary_key :email
   attributes :name, :age
 end
