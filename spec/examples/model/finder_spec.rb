@@ -41,6 +41,8 @@ describe CassandraORM::Model::Finder do
 
     product = Product.find name: 'rails'
     expect(product).to be_nil
+
+    expect { Product.find! name: 'rails' }.to raise_error CassandraORM::RecordNotFound
   end
 
   it 'should find all cassandra versions' do

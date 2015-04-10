@@ -3,11 +3,17 @@ require 'cassandra-orm/model/finder'
 module CassandraORM
   class Model < Base
     module Persist
-      def save **options
+      def save options = {}
         new? || options[:exclusive] ? _create(options) : _update(options)
       end
 
-      def destroy **options
+      def save! options = {}
+        result = save options
+        fail SaveFailure unless result
+        result
+      end
+
+      def destroy options = {}
         @errors.clear
         return false if before_destroy == false
         hash = primary_key_hash
@@ -23,6 +29,12 @@ module CassandraORM
         else
           append_error :'[failed]', :conditions
         end
+      end
+
+      def destroy! options = {}
+        result = destroy options
+        fail DestroyFailure unless result
+        result
       end
 
       # Callbacks

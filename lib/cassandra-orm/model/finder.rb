@@ -19,6 +19,12 @@ module CassandraORM
         find_all(attrs, options.merge(limit: 1)).first
       end
 
+      def find! attrs, options = {}
+        result = find attrs, options
+        raise RecordNotFound unless result
+        result
+      end
+
     private
 
       def _find_all keys, values, limit: nil, **options

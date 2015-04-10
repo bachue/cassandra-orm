@@ -59,6 +59,26 @@ describe CassandraORM::Model::Persist do
       expect(upgrade.errors).to match '[failed]': :unique
     end
 
+    it 'should raise error when save failed' do
+      product = Product.new name: 'cassandra'
+      expect(product.save!).to be true
+      expect(product.new?).to be false
+      product = Product.new name: 'cassandra'
+      expect { product.save!(exclusive: true) }.to raise_error CassandraORM::SaveFailure
+      expect(product.new?).to be true
+      expect(product.errors).to match '[failed]': :unique
+
+      upgrade = Upgrade.new product_name: 'cassandra', version: 1,
+                            minimal_version: 0, url: 'http://cassandra.apache.org/'
+      expect(upgrade.save!(exclusive: true)).to be true
+      expect(upgrade.new?).to be false
+      upgrade = Upgrade.new product_name: 'cassandra', version: 1,
+                            minimal_version: 0, url: 'http://cassandra.apache.org/'
+      expect { upgrade.save!(exclusive: true) }.to raise_error CassandraORM::SaveFailure
+      expect(upgrade.new?).to be true
+      expect(upgrade.errors).to match '[failed]': :unique
+    end
+
     it 'should clear errors when save a model successfully' do
       product1 = Product.new name: 'cassandra'
       expect(product1.save(exclusive: true)).to be true
@@ -72,7 +92,7 @@ describe CassandraORM::Model::Persist do
   end
 
   context 'update' do
-    let(:product) { Product.new(name: 'cassandra').tap(&:save) }
+    let(:product) { Product.new(name: 'cassandra').tap(&:save!) }
     let(:upgrade) { Upgrade.new(product_name: 'cassandra', version: 1, minimal_version: 0,
                                 url: 'http://cassandra.apache.org', changelog: 'Changelog for 1.0').tap(&:save) }
     it 'should not be able to update product\'s name' do
@@ -104,6 +124,13 @@ describe CassandraORM::Model::Persist do
       expect(upgrade.save(exclusive: true)).to be false
       expect(upgrade.errors).to match '[failed]': :unique
       expect(upgrade.save).to be true
+    end
+
+    it 'should raise error when failed to save' do
+      upgrade.url = 'http://www.datastax.com/'
+      expect { upgrade.save!(exclusive: true) }.to raise_error CassandraORM::SaveFailure
+      expect(upgrade.errors).to match '[failed]': :unique
+      expect(upgrade.save!).to be true
     end
 
     it 'should still be able to update unexisted model' do
@@ -191,6 +218,14 @@ describe CassandraORM::Model::Persist do
       upgrade2 = upgrade.dup
       expect(upgrade.destroy).to be true
       expect(upgrade2.destroy(if: {minimal_version: 0})).to be false
+      expect(upgrade2.new?).to be false
+      expect(upgrade2.errors).to match '[failed]': :conditions
+    end
+
+    it 'should raise error when failed to delete an object' do
+      upgrade2 = upgrade.dup
+      expect(upgrade.destroy!).to be true
+      expect { upgrade2.destroy!(if: {minimal_version: 0}) }.to raise_error CassandraORM::DestroyFailure
       expect(upgrade2.new?).to be false
       expect(upgrade2.errors).to match '[failed]': :conditions
     end
