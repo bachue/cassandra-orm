@@ -33,6 +33,10 @@ module CassandraORM
         all(limit: 1).first
       end
 
+      def count
+        execute('count', "SELECT COUNT(*) FROM #{table_name}").first['count']
+      end
+
     private
 
       def _find_all keys, values, limit: nil, **options

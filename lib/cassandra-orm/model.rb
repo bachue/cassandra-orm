@@ -107,6 +107,10 @@ module CassandraORM
           def table_name
             name.tableize
           end
+
+          def truncate
+            execute 'truncate', "TRUNCATE #{table_name}"
+          end
         end
       end
     end

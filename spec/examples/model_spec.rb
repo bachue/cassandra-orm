@@ -107,4 +107,16 @@ describe CassandraORM::Model do
     expect(upgrade2.new?).to be true
     expect(upgrade2.errors).to be_empty
   end
+
+  it 'should be able to truncate all data' do
+    Upgrade.new(product_name: 'cassandra-orm', version: 1, minimal_version: 0,
+                url: 'https://github.com/bachue/cassandra-orm.git', changelog: 'Changelog for 1.0').save!
+    Upgrade.new(product_name: 'cassandra-orm', version: 2, minimal_version: 1,
+                url: 'https://github.com/bachue/cassandra-orm.git', changelog: 'Changelog for 2.0').save!
+    Upgrade.new(product_name: 'cassandra-orm', version: 3, minimal_version: 2,
+                url: 'https://github.com/bachue/cassandra-orm.git', changelog: 'Changelog for 3.0').save!
+    expect(Upgrade.count).to be 3
+    Upgrade.truncate
+    expect(Upgrade.count).to be 0
+  end
 end

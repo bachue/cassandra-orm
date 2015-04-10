@@ -24,6 +24,11 @@ describe CassandraORM::Model::Finder do
     CQL
   end
 
+  it 'should count all tables correctly' do
+    expect(Product.count).to be 3
+    expect(Upgrade.count).to be 3
+  end
+
   it 'should list all products' do
     products = Product.all
     expect(products.size).to be 3
