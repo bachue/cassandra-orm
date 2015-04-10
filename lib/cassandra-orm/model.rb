@@ -21,7 +21,7 @@ module CassandraORM
     end
 
     def set attrs
-      attrs.each { |k, v| instance_variable_set :"@#{k}", v }
+      attrs.each { |k, v| send "#{k}=", v }
     end
 
     def attributes
