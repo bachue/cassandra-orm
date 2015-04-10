@@ -3,6 +3,7 @@ require 'bundler/setup'
 require 'erb'
 require 'yaml'
 require 'pathname'
+require 'logger'
 require 'active_support/core_ext/class/subclasses'
 require 'active_support/core_ext/module/introspection'
 
