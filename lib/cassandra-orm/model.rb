@@ -53,6 +53,12 @@ module CassandraORM
       false
     end
 
+    def append_error! key, value
+      result = append_error key, value
+      fail ValidationError unless result
+      result
+    end
+
     def reload
       hash = primary_key_hash
       keys, values = hash.keys, hash.values

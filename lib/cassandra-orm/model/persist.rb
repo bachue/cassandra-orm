@@ -15,7 +15,7 @@ module CassandraORM
 
       def destroy options = {}
         @errors.clear
-        return false if before_destroy == false
+        return false if send_callback(:before_destroy) == false
         hash = primary_key_hash
         keys, values = hash.keys, hash.values
         conditions = options.delete(:if) || {}
@@ -45,10 +45,16 @@ module CassandraORM
 
     private
 
+      def send_callback callback
+        send callback
+      rescue ValidationError
+        false
+      end
+
       def _create options
         @errors.clear
-        return false if before_create == false
-        return false if before_save == false
+        return false if send_callback(:before_create) == false
+        return false if send_callback(:before_save) == false
         attrs = attributes
         exclusive = options.delete :exclusive
         cql = cql_for_insert attrs.keys, exclusive: exclusive
@@ -63,8 +69,8 @@ module CassandraORM
 
       def _update options
         @errors.clear
-        return false if before_update == false
-        return false if before_save == false
+        return false if send_callback(:before_update) == false
+        return false if send_callback(:before_save) == false
         attrs = attributes
         keys = self.class.attributes - self.class.primary_key
         values = keys.map { |key| attrs[key] }

@@ -156,13 +156,13 @@ describe CassandraORM::Model::Persist do
     before :each do
       Upgrade.class_exec do
         def before_save
-          return append_error(:minimal_version, :presence) unless @minimal_version
-          return append_error(:minimal_version, :smaller) unless @minimal_version < @version
+          append_error! :minimal_version, :presence unless @minimal_version
+          append_error! :minimal_version, :smaller unless @minimal_version < @version
         end
 
         def before_update
-          return append_error(:url, :presence) unless @url
-          return append_error(:url, :format) unless @url.start_with?('http://')
+          append_error! :url, :presence unless @url
+          append_error! :url, :format unless @url.start_with?('http://')
         end
       end
     end
