@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.summary       = 'Just a simple orm library for Cassandra'
   spec.description   = spec.summary
 
-  spec.files         = `git ls-files -z`.split('\x0').reject { |f| f.match(%r{^(test|spec|features)/}) }
+  spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
   spec.test_files    = Dir['spec/*_spec.rb']
   spec.require_paths = ['lib']
 
