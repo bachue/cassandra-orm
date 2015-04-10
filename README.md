@@ -2,6 +2,8 @@
 
 A simple Cassandra ORM library, which can provide with a CRUD model to operate Cassandra. Based on [cassandra-driver](https://github.com/datastax/ruby-driver.git).
 
+[![Build Status](https://travis-ci.org/bachue/cassandra-orm.png?branch=master)](https://travis-ci.org/bachue/cassandra-orm)
+
 ## Installation
 
 Add this line to your application's Gemfile:
