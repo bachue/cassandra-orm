@@ -1,8 +1,6 @@
 # Cassandra::Orm
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/cassandra/orm`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+A simple Cassandra ORM library, which can provide with a CRUD model to operate Cassandra. Based on [cassandra-driver](https://github.com/datastax/ruby-driver.git).
 
 ## Installation
 
@@ -22,7 +20,26 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+```ruby
+require 'cassandra-orm'
+require 'logger'
+
+CassandraORM.configure keyspace: 'test', logger: Logger.new(STDERR)
+CassandraORM.connect
+
+class User
+  set_primary_key :email
+  attributes :name, :age
+end
+
+user = User.new email: 'bachue.shu@gmail.com', name: 'Bachue Zhou', age: 25
+user.save exclusive: true # save it only when there's no user whose email is 'bachue.shu@gmail.com'
+
+user.age = 26
+user.save if: {age: 25} # update it only when his age is still 25
+
+user.destroy # returns true, delete the record
+````
 
 ## Development
 
