@@ -9,6 +9,10 @@ module CassandraORM
     Base.connect
   end
 
+  def reconnect
+    Base.reconnect
+  end
+
   def execute identifier, cql, options = {}
     Model.execute identifier, cql, options
   end
@@ -19,5 +23,5 @@ module CassandraORM
     false
   end
 
-  module_function :configure, :connect, :execute, :heartbeat
+  module_function :configure, :connect, :reconnect, :execute, :heartbeat
 end

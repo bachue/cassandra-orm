@@ -12,7 +12,7 @@ module CassandraORM
         @errors = Hash.new { |h, k| h[k] = {} }
       end
 
-      delegate :inspect, :clear, :empty?, :==, :eql?, to: :@errors
+      delegate :inspect, :clear, :empty?, :==, :eql?, :[], :fetch, to: :@errors
 
       def append attr, key, options = {}
         @errors[attr].merge! key => options

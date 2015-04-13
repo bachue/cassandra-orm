@@ -3,7 +3,7 @@ require 'active_support/core_ext/class/attribute'
 
 module CassandraORM
   class Base
-    class_attribute :session, :cluster, :keyspace
+    class_attribute :session, :cluster, :keyspace, :config
 
     def initialize
       fail 'Cannot instantiate CassandraORM::Base' if self == Base
@@ -11,15 +11,22 @@ module CassandraORM
 
     class << self
       def configure config
-        config = config.symbolize_keys
-        self.keyspace = config.delete :keyspace
+        self.config = config.symbolize_keys
+        self.keyspace = self.config.delete :keyspace
         fail 'keyspace is required' unless keyspace
-        self.cluster = Cassandra.cluster config.merge(page_size: nil)
       end
 
       def connect
-        fail 'Configure CassandraORM first' unless cluster
+        fail 'Configure CassandraORM first' unless config
+        self.cluster = Cassandra.cluster config.merge(page_size: nil)
         self.session = cluster.connect keyspace
+      end
+
+      def reconnect
+        fail 'Connect to Cassandra first' unless session
+        self.session.close_async
+        self.cluster.close_async
+        connect
       end
     end
   end
