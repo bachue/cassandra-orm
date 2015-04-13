@@ -27,7 +27,7 @@ module CassandraORM
           @persisted = nil
           true
         else
-          append_error :'[failed]', :conditions
+          append_error :'[primarykey]', :conditions
         end
       end
 
@@ -66,7 +66,7 @@ module CassandraORM
           @persisted = true
           to_reload ? reload : true
         else
-          append_error :'[failed]', :unique
+          append_error :'[primarykey]', :unique
         end
       end
 
@@ -89,7 +89,7 @@ module CassandraORM
           @persisted = true
           to_reload ? reload : true
         else
-          append_error :'[failed]', :conditions
+          append_error :'[primarykey]', :conditions
         end
       end
 
