@@ -56,8 +56,20 @@ describe CassandraORM::Model do
     expect(upgrade.description).to eq 'The latest patch, fix lots of bugs'
   end
 
+  it 'should be able to initialize with undeclared attributes' do
+    upgrade = Upgrade.new product_name: 'cassandra-orm', version: '1.0', minimal_version: '0.0',
+                          url: 'https://github.com/bachue/cassandra-orm.git', changelog: 'It can use now!',
+                          undeclared: 'Here\'s an undeclared attribute'
+    expect(upgrade.respond_to?(:undeclared)).to be false
+    expect(upgrade.product_name).to eq 'cassandra-orm'
+    expect(upgrade.version).to eq '1.0'
+    expect(upgrade.minimal_version).to eq '0.0'
+    expect(upgrade.changelog).to eq 'It can use now!'
+    expect(upgrade.url).to eq 'https://github.com/bachue/cassandra-orm.git'
+    expect(upgrade.instance_variable_get(:"@undeclared")).to eq 'Here\'s an undeclared attribute'
+  end
+
   it 'should be able to get all attributes by #attributes, extra attributes will be ignored' do
-    now = Time.now
     upgrade = Upgrade.new product_name: 'cassandra-orm', version: '1.0', minimal_version: '0.0',
                           url: 'https://github.com/bachue/cassandra-orm.git', changelog: 'It can use now!',
                           description: 'The latest patch, fix lots of bugs'

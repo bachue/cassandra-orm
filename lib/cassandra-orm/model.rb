@@ -21,7 +21,10 @@ module CassandraORM
     end
 
     def set attrs
-      attrs.each { |k, v| send "#{k}=", v }
+      attrs.each do |k, v|
+        method = :"#{k}="
+        respond_to?(method) ? send(method, v) : instance_variable_set(:"@#{k}", v)
+      end
     end
 
     def attributes
