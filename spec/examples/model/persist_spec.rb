@@ -46,7 +46,7 @@ describe CassandraORM::Model::Persist do
       product = Product.new name: 'cassandra'
       expect(product.save(exclusive: true)).to be false
       expect(product.new?).to be true
-      expect(product.errors).to match '[primarykey]': :unique
+      expect(product.errors).to eq '[primarykey]': {unique: {}}
 
       upgrade = Upgrade.new product_name: 'cassandra', version: 1,
                             minimal_version: 0, url: 'http://cassandra.apache.org/'
@@ -56,7 +56,7 @@ describe CassandraORM::Model::Persist do
                             minimal_version: 0, url: 'http://cassandra.apache.org/'
       expect(upgrade.save(exclusive: true)).to be false
       expect(upgrade.new?).to be true
-      expect(upgrade.errors).to match '[primarykey]': :unique
+      expect(upgrade.errors).to eq '[primarykey]': {unique: {}}
     end
 
     it 'should raise error when save failed' do
@@ -66,7 +66,7 @@ describe CassandraORM::Model::Persist do
       product = Product.new name: 'cassandra'
       expect { product.save!(exclusive: true) }.to raise_error CassandraORM::SaveFailure
       expect(product.new?).to be true
-      expect(product.errors).to match '[primarykey]': :unique
+      expect(product.errors).to eq '[primarykey]': {unique: {}}
 
       upgrade = Upgrade.new product_name: 'cassandra', version: 1,
                             minimal_version: 0, url: 'http://cassandra.apache.org/'
@@ -76,7 +76,7 @@ describe CassandraORM::Model::Persist do
                             minimal_version: 0, url: 'http://cassandra.apache.org/'
       expect { upgrade.save!(exclusive: true) }.to raise_error CassandraORM::SaveFailure
       expect(upgrade.new?).to be true
-      expect(upgrade.errors).to match '[primarykey]': :unique
+      expect(upgrade.errors).to eq '[primarykey]': {unique: {}}
     end
 
     it 'should clear errors when save a model successfully' do
@@ -84,7 +84,7 @@ describe CassandraORM::Model::Persist do
       expect(product1.save(exclusive: true)).to be true
       product2 = Product.new name: 'cassandra'
       expect(product2.save(exclusive: true)).to be false
-      expect(product2.errors).to match '[primarykey]': :unique
+      expect(product2.errors).to eq '[primarykey]': {unique: {}}
       expect(product1.destroy).to be true
       expect(product2.save(exclusive: true)).to be true
       expect(product2.errors).to be_empty
@@ -143,14 +143,14 @@ describe CassandraORM::Model::Persist do
     it 'should not add :exclusive option when try to update' do
       upgrade.url = 'http://www.datastax.com/'
       expect(upgrade.save(exclusive: true)).to be false
-      expect(upgrade.errors).to match '[primarykey]': :unique
+      expect(upgrade.errors).to eq '[primarykey]': {unique: {}}
       expect(upgrade.save).to be true
     end
 
     it 'should raise error when failed to save' do
       upgrade.url = 'http://www.datastax.com/'
       expect { upgrade.save!(exclusive: true) }.to raise_error CassandraORM::SaveFailure
-      expect(upgrade.errors).to match '[primarykey]': :unique
+      expect(upgrade.errors).to eq '[primarykey]': {unique: {}}
       expect(upgrade.save!).to be true
     end
 
@@ -168,7 +168,7 @@ describe CassandraORM::Model::Persist do
       expect(upgrade2.destroy).to be true
       upgrade.url = 'http://www.datastax.com/'
       expect(upgrade.save(if: {url: 'http://cassandra.apache.org'})).to be false
-      expect(upgrade.errors).to match '[primarykey]': :conditions
+      expect(upgrade.errors).to eq '[primarykey]': {conditions: {}}
       expect(Upgrade.find(product_name: 'cassandra', version: 1)).to be_nil
     end
 
@@ -203,6 +203,7 @@ describe CassandraORM::Model::Persist do
 
         def before_update
           append_error! :url, :presence unless @url
+          append_error! :url, :type, type: String unless @url.is_a?(String)
           append_error! :url, :format unless @url.start_with?('http://')
         end
       end
@@ -211,18 +212,23 @@ describe CassandraORM::Model::Persist do
     it 'should be able to validate' do
       upgrade = Upgrade.new product_name: 'cassandra', version: 1
       expect(upgrade.save).to be false
-      expect(upgrade.errors).to eq minimal_version: :presence
+      expect(upgrade.errors).to eq minimal_version: {presence: {}}
       upgrade.minimal_version = 1
       expect(upgrade.save).to be false
-      expect(upgrade.errors).to eq minimal_version: :smaller
+      expect(upgrade.errors).to eq minimal_version: {smaller: {}}
       upgrade.minimal_version = 0
       expect(upgrade.save).to be true
       expect(upgrade.errors).to be_empty
       expect(upgrade.save).to be false
-      expect(upgrade.errors).to eq url: :presence
+      expect(upgrade.errors).to eq url: {presence: {}}
+      upgrade.url = URI 'https://cassandra.apache.org'
+      expect(upgrade.save).to be false
+      expect(upgrade.errors).to eq url: {type: {type: String}}
+      expect(upgrade.errors.full_messages).to eq ['The url is not a valid String.']
       upgrade.url = 'https://cassandra.apache.org'
       expect(upgrade.save).to be false
-      expect(upgrade.errors).to eq url: :format
+      expect(upgrade.errors).to eq url: {format: {}}
+      expect(upgrade.errors.full_messages).to eq ['The format of url is incorrect.']
       upgrade.url = 'http://cassandra.apache.org'
       expect(upgrade.save).to be true
     end
@@ -260,7 +266,7 @@ describe CassandraORM::Model::Persist do
       expect(upgrade.destroy).to be true
       expect(upgrade2.destroy(if: {minimal_version: 0})).to be false
       expect(upgrade2.new?).to be false
-      expect(upgrade2.errors).to match '[primarykey]': :conditions
+      expect(upgrade2.errors).to eq '[primarykey]': {conditions: {}}
     end
 
     it 'should raise error when failed to delete an object' do
@@ -268,7 +274,7 @@ describe CassandraORM::Model::Persist do
       expect(upgrade.destroy!).to be true
       expect { upgrade2.destroy!(if: {minimal_version: 0}) }.to raise_error CassandraORM::DestroyFailure
       expect(upgrade2.new?).to be false
-      expect(upgrade2.errors).to match '[primarykey]': :conditions
+      expect(upgrade2.errors).to eq '[primarykey]': {conditions: {}}
     end
 
     it 'should clear errors when delete a model successfully' do
@@ -276,7 +282,7 @@ describe CassandraORM::Model::Persist do
       expect(product.save(exclusive: true)).to be true
       product = Product.new name: 'cassandra'
       expect(product.save(exclusive: true)).to be false
-      expect(product.errors).to match '[primarykey]': :unique
+      expect(product.errors).to eq '[primarykey]': {unique: {}}
       expect(product.destroy).to be true
       expect(product.new?).to be true
       expect(product.errors).to be_empty

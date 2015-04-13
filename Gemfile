@@ -5,6 +5,7 @@ gem 'rake', '~> 10.0'
 gem 'rspec', '>= 3.0.0'
 gem 'cassandra-driver'
 gem 'activesupport'
+gem 'i18n'
 
 group :debug do
   gem 'pry'

@@ -1,0 +1,19 @@
+en:
+    cassandra:
+        errors:
+            exact_length: "The %{attr} is not %{exact} characters."
+            format: "The format of %{attr} is incorrect."
+            includes: "The %{attr} is not in range or set: %{values}."
+            integer: "The %{attr} is not a number."
+            length_range: "The %{attr} is too short or too long."
+            max_length: "The %{attr} is too long."
+            min_length: "The %{attr} is too short."
+            not_null: "The %{attr} is not present."
+            numeric: "The %{attr} is not a number."
+            type: "The %{attr} is not a valid %{type}."
+            presence: "The %{attr} is empty."
+            unique: "The %{attr} is already taken."
+        upgrade:
+            errors:
+                primarykey:
+                    unique: "The upgrade is created."

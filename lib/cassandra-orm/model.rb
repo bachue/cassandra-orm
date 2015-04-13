@@ -2,6 +2,7 @@ require 'cassandra-orm/base'
 require 'cassandra-orm/logger'
 require 'cassandra-orm/model/finder'
 require 'cassandra-orm/model/persist'
+require 'cassandra-orm/model/errors'
 require 'active_support/core_ext/hash/keys'
 require 'active_support/core_ext/string/inflections'
 require 'active_support/core_ext/module/aliasing'
@@ -17,7 +18,7 @@ module CassandraORM
     def initialize attrs = {}
       fail 'Cannot instantiate CassandraORM::Model' if self == Model
       set attrs
-      @errors = {}
+      @errors = Errors.new self
     end
 
     def set attrs
@@ -55,15 +56,14 @@ module CassandraORM
       primary_key_hash == right.primary_key_hash
     end
 
-    def append_error key, value
-      @errors.merge! key => value
+    def append_error key, value, options = {}
+      @errors.append key, value, options
       false
     end
 
-    def append_error! key, value
-      result = append_error key, value
-      fail ValidationError unless result
-      result
+    def append_error! key, value, options = {}
+      append_error key, value, options
+      fail ValidationError
     end
 
     def reload
