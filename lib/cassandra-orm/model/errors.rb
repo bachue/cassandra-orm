@@ -9,13 +9,13 @@ module CassandraORM
     class Errors
       def initialize object
         @object = object
-        @errors = Hash.new { |h, k| h[k] = Hash.new { |h2, k2| h2[k2] = {} } }
+        @errors = Hash.new { |h, k| h[k] = {} }
       end
 
       delegate :inspect, :clear, :empty?, :==, :eql?, to: :@errors
 
       def append attr, key, options = {}
-        @errors[attr][key] = options
+        @errors[attr].merge! key => options
       end
 
       def full_messages locale: :en
