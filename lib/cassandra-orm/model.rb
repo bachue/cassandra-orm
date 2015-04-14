@@ -47,6 +47,11 @@ module CassandraORM
       end
     end
 
+    def inspect
+      attrs = attributes.map { |k, v| "#{k}=#{v.inspect}" }.join(' ')
+      "#<#{self.class.name} #{attrs}>"
+    end
+
     def new?
       !@persisted
     end
