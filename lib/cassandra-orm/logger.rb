@@ -18,6 +18,11 @@ module CassandraORM
           end
         end
 
+        def execute_async identifier, statement, options = {}
+          logger.info log_message(identifier, _fetch_cql(statement).strip, options[:arguments])
+          session.execute_async statement, options
+        end
+
         def _fetch_cql statement
           case statement
           when String, Cassandra::Statements::Simple then statement
@@ -34,12 +39,21 @@ module CassandraORM
       self.class.execute identifier, cql, options
     end
 
+    def execute_async identifier, cql, options = {}
+      self.class.execute_async identifier, cql, options
+    end
+
     def debug identifier, cql, values, &block
-      message = "CQL [#{identifier}] #{cql}"
-      message << " % #{values.inspect}" if values
-      benchmark message, &block
+      benchmark log_message(identifier, cql, values), &block
     end
     private :debug
+
+    def log_message identifier, cql, values
+      message = "CQL [#{identifier}] #{cql}"
+      message << " % #{values.inspect}" if values
+      message
+    end
+    private :log_message
 
     def logger
       self.class.send :logger

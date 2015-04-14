@@ -61,6 +61,34 @@ describe CassandraORM::Model::Finder do
     expect { Product.find! name: 'rails' }.to raise_error CassandraORM::RecordNotFound
   end
 
+  it 'should be able to list products asyncly' do
+    products = Product.all async: true
+    expect(products.size).to be 3
+    products.each do |product|
+      expect(product).not_to be_new
+      expect(%w(cassandra orm ruby)).to be_include product.name
+    end
+  end
+
+  it 'should be able to find the first n products asyncly' do
+    products = Product.all limit: 2, async: true
+    expect(products.size).to be 2
+
+    products = Product.all limit: 1, async: true
+    expect(products.size).to be 1
+
+    product = Product.first async: true
+    expect(product.__getobj__).to be_a Product
+  end
+
+  it 'should be find product by name asyncly' do
+    product = Product.find({ name: 'orm' }, async: true)
+    expect(product.name).to eq 'orm'
+
+    product = Product.find({ name: 'rails' }, async: true)
+    expect(product.__getobj__).to be_nil
+  end
+
   it 'should find all cassandra versions' do
     upgrades = Upgrade.find_all product_name: 'cassandra'
     all_versions = { 2 => 1, 3 => 2, 4 => 3 }
@@ -83,6 +111,33 @@ describe CassandraORM::Model::Finder do
     upgrade = Upgrade.find product_name: 'cassandra', version: 4
     expect(upgrade).to be_a Upgrade
     expect(upgrade).not_to be_new
+    expect(upgrade.product_name).to eq 'cassandra'
+    expect(upgrade.version).to eq 4
+    expect(upgrade.minimal_version).to eq 3
+    expect(upgrade.url).to eq 'http://cassandra.apache.org/'
+    expect(upgrade.changelog).to eq 'changes for 4.0'
+  end
+
+  it 'should find all cassandra versions asyncly' do
+    upgrades = Upgrade.find_all({ product_name: 'cassandra' }, async: true)
+    all_versions = { 2 => 1, 3 => 2, 4 => 3 }
+    expect(upgrades.size).to be 3
+    upgrades.each do |upgrade|
+      expect(upgrade).not_to be_new
+      expect(upgrade.product_name).to eq 'cassandra'
+      expect(upgrade.url).to eq 'http://cassandra.apache.org/'
+      expect(upgrade.changelog).to match(/^changes for \d\.\d$/)
+      expect(all_versions.keys).to be_include upgrade.version
+      expect(upgrade.minimal_version).to eq all_versions[upgrade.version]
+    end
+
+    upgrades = Upgrade.find_all({product_name: 'orm'}, async: true)
+    expect(upgrades.empty?).to be true
+  end
+
+  it 'should find single cassandra version asyncly' do
+    upgrade = Upgrade.find({ product_name: 'cassandra', version: 4 }, async: true)
+    expect(upgrade.new?).not_to be true
     expect(upgrade.product_name).to eq 'cassandra'
     expect(upgrade.version).to eq 4
     expect(upgrade.minimal_version).to eq 3

@@ -17,6 +17,10 @@ module CassandraORM
     Model.execute identifier, cql, options
   end
 
+  def execute_async identifier, cql, options = {}
+    Model.execute_async identifier, cql, options
+  end
+
   def heartbeat
     Model.execute('heartbeat', 'SELECT NOW() FROM system.local').size == 1
   rescue
