@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ['Bachue Zhou']
   spec.email         = ['bachue.shu@gmail.com']
 
-  spec.summary       = 'Just a simple orm library for Cassandra'
+  spec.summary       = 'Just a simple orm library for Cassandra, based on cassandra-driver, support i18n & async.'
   spec.description   = spec.summary
 
   spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
