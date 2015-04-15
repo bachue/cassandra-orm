@@ -13,7 +13,7 @@ describe CassandraORM::Base do
     pids = (1..10).map do
       fork do
         CassandraORM.reconnect
-        Process.exit CassandraORM.heartbeat
+        exit! CassandraORM.heartbeat
       end
     end
     pids.each do |pid|
