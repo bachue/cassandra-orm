@@ -10,15 +10,12 @@ describe CassandraORM::Base do
   end
 
   it 'should be able to reconnect' do
-    pids = (1..10).map do
+    10.times do
       fork do
         CassandraORM.reconnect
         exit! CassandraORM.heartbeat
       end
     end
-    pids.each do |pid|
-      _, status = Process.waitpid2 pid
-      expect(status.exitstatus).to be 0
-    end
+    expect(Process.waitall.map { |_, status| status.exitstatus }).to all be 0
   end
 end
